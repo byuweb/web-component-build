@@ -1,5 +1,18 @@
-/**
- * Created by ThatJoeMoore on 3/1/17
+/*
+ *  @license
+ *    Copyright 2017 Brigham Young University
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  */
 "use strict";
 const path = require('path');
@@ -7,7 +20,6 @@ const rename = require('gulp-rename');
 const sourcemaps = require('gulp-sourcemaps');
 const webpackStream = require('webpack-stream');
 const babel = require('gulp-babel');
-const gulpif = require('gulp-if');
 const through = require('through2');
 const loaderGenerator = require('byu-web-component-loader-generator').stream;
 
@@ -15,7 +27,7 @@ const loaderGenerator = require('byu-web-component-loader-generator').stream;
  * @typedef {{}} Options
  * @property {string} componentName
  * @property {string} [outputDirectory]
- * @property {{input: string, output: {loader: string, latest: string, compat: string}}} js
+ * @property {{input: string, output: {loader: string, bundle: string, compatBundle: string}}} js
  * @property {{input: string, output: string}} [css]
  * @property {string} webpackContext
  * @property {{}} webpackConfig
@@ -38,10 +50,10 @@ module.exports = function initGulp(gulp, opts) {
     }
 
     let jsOutput = js.output || {};
-    let latestOutput = jsOutput.latest || 'components.js';
-    let compatOutput = jsOutput.compat || path.basename(latestOutput, '.js') + '-compat.js';
+    let bundleOutput = jsOutput.bundle || 'components.js';
+    let compatOutput = jsOutput.compatBundle || path.basename(bundleOutput, '.js') + '-compat.js';
 
-    let latestOutputMin = minFile(latestOutput);
+    let bundleOutputMin = minFile(bundleOutput);
     let compatOutputMin = minFile(compatOutput);
 
     let loaderOutput = jsOutput.loader || componentName + '.js';
@@ -51,7 +63,7 @@ module.exports = function initGulp(gulp, opts) {
     gulp.task('wc:build', ['wc:assemble', 'wc:minify']);
 
     gulp.task('wc:assemble', function () {
-        let wpConfig = opts.webpackConfig || require('../default-webpack.config')(js.input, latestOutput);
+        let wpConfig = opts.webpackConfig || require('../default-webpack.config')(js.input, bundleOutput);
         if (webpackContext) wpConfig.context = webpackContext;
         return gulp.src(js.input)
             .pipe(webpackStream(wpConfig, webpack))
@@ -77,25 +89,12 @@ module.exports = function initGulp(gulp, opts) {
             .pipe(sourcemaps.write('.'))
             .pipe(loaderGenerator({
                 polyfills: 'https://cdn.byu.edu/web-component-polyfills/latest/polyfills.min.js',
-                bundle: latestOutputMin,
+                bundle: bundleOutputMin,
                 compatBundle: compatOutputMin,
                 output: loaderOutput
             }))
             .pipe(gulp.dest(outputDir));
     });
-
-    // gulp.task('wc:loader', function () {
-    //     let input = js.input;
-    //     if (webpackContext) input = path.join(webpackContext, input);
-    //     gulp.src(input)
-    //         .pipe(loaderGenerator({
-    //             polyfills: 'https://cdn.byu.edu/web-component-polyfills/latest/polyfills.min.js',
-    //             bundle: latestOutputMin,
-    //             compatBundle: compatOutputMin,
-    //             output: loaderOutput
-    //         }))
-    //         .pipe(gulp.dest(outputDir));
-    // });
 
     gulp.task('wc:minify', ['wc:assemble'], function () {
         return gulp.src([path.join(outputDir, '*.js'), '!' + path.join(outputDir, '*.min.js')])
