@@ -1,5 +1,7 @@
 # web-component-build
 
+[![NPM version][npm-image]][npm-url]
+
 Build toolchain for BYU Web Components.
 
 This toolchain bundles together components into a single js file
@@ -54,3 +56,5 @@ js.output.bundle | N | `'components.js'` | Main bundle file
 js.output.compatBundle | N | `'components-compat.js'` | Backwards-compatibile (ES5) bundle file
 webpackConfig | N | Default Config | Overrides the webpack configuration
 
+[npm-url]: https://www.npmjs.com/package/byu-web-component-build
+[npm-image]: https://img.shields.io/npm/v/byu-web-component-build.svg
