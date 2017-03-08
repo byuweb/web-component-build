@@ -16,21 +16,29 @@
  */
 "use strict";
 const path = require('path');
-const rename = require('gulp-rename');
 const sourcemaps = require('gulp-sourcemaps');
-const webpackStream = require('webpack-stream');
-const babel = require('gulp-babel');
-const through = require('through2');
-const loaderGenerator = require('byu-web-component-loader-generator').stream;
+const rename = require('gulp-rename');
 
 /**
  * @typedef {{}} Options
  * @property {string} componentName
  * @property {string} [outputDirectory]
- * @property {{input: string, output: {loader: string, bundle: string, compatBundle: string}}} js
- * @property {{input: string, output: string}} [css]
+ * @property {JsConfig} [js]
+ * @property {CssConfig} [css]
  * @property {string} webpackContext
  * @property {{}} webpackConfig
+ */
+
+/**
+ * @typedef {{}} JsConfig
+ * @property {string} input
+ * @property {{loader: string, bundle: string, compatBundle: string, webpackConfig: {}, webpackContext: string}} [output]
+ */
+
+/**
+ * @typedef {{}} CssConfig
+ * @property {string} input
+ * @property {string} [output]
  */
 
 /**
@@ -40,7 +48,7 @@ const loaderGenerator = require('byu-web-component-loader-generator').stream;
  */
 module.exports = function initGulp(gulp, opts) {
     if (!opts) throw new Error('`opts` must be specified');
-    let {componentName, js, css, webpackContext} = opts;
+    let {componentName, js, css} = opts;
 
     let outputDir;
     if (opts.outputDirectory && path.isAbsolute(opts.outputDirectory)) {
@@ -49,7 +57,28 @@ module.exports = function initGulp(gulp, opts) {
         outputDir = path.join(process.cwd(), opts.outputDirectory || 'dist');
     }
 
-    let jsOutput = js.output || {};
+    let buildTasks = [];
+
+    if (js) {
+        let task = initJs(gulp, js, componentName, outputDir);
+        buildTasks.push(task);
+    }
+
+    if (css) {
+        let task = initCss(gulp, css, componentName, outputDir);
+        buildTasks.push(task);
+    }
+
+    gulp.task('wc:build', buildTasks);
+};
+
+function initJs(gulp, jsConfig, componentName, outputDir) {
+    const webpackStream = require('webpack-stream');
+    const babel = require('gulp-babel');
+    const through = require('through2');
+    const loaderGenerator = require('byu-web-component-loader-generator').stream;
+
+    let jsOutput = jsConfig.output || {};
     let bundleOutput = jsOutput.bundle || 'components.js';
     let compatOutput = jsOutput.compatBundle || path.basename(bundleOutput, '.js') + '-compat.js';
 
@@ -60,12 +89,10 @@ module.exports = function initGulp(gulp, opts) {
 
     const webpack = require('webpack');
 
-    gulp.task('wc:build', ['wc:assemble', 'wc:minify']);
-
-    gulp.task('wc:assemble', function () {
-        let wpConfig = opts.webpackConfig || require('../default-webpack.config')(js.input, bundleOutput);
-        if (webpackContext) wpConfig.context = webpackContext;
-        return gulp.src(js.input)
+    gulp.task('wc:js:assemble', function () {
+        let wpConfig = jsConfig.webpackConfig || require('../default-webpack.config')(jsConfig.input, bundleOutput);
+        if (jsConfig.webpackContext) wpConfig.context = jsConfig.webpackContext;
+        return gulp.src(jsConfig.input)
             .pipe(webpackStream(wpConfig, webpack))
             .pipe(gulp.dest(outputDir))
             .pipe(sourcemaps.init({loadMaps: true}))
@@ -96,7 +123,7 @@ module.exports = function initGulp(gulp, opts) {
             .pipe(gulp.dest(outputDir));
     });
 
-    gulp.task('wc:minify', ['wc:assemble'], function () {
+    gulp.task('wc:js:minify', ['wc:js:assemble'], function () {
         return gulp.src([path.join(outputDir, '*.js'), '!' + path.join(outputDir, '*.min.js')])
 
             .pipe(sourcemaps.init({loadMaps: true}))
@@ -108,11 +135,38 @@ module.exports = function initGulp(gulp, opts) {
             .pipe(gulp.dest('dist'));
     });
 
-    function minFile(file) {
-        let parts = path.parse(file);
-        parts.name = parts.name + '.min';
-        delete parts.base;
-        return path.format(parts);
-    }
-};
+    gulp.task('wc:js', ['wc:js:assemble', 'wc:js:minify']);
+
+    return 'wc:js'
+}
+
+function initCss(gulp, cssConfig, componentName, outputDir) {
+    const sass = require('gulp-sass');
+    const cssmin = require('gulp-cssmin');
+
+    let cssOutput = cssConfig.output || componentName + '.css';
+    let cssOutputMin = minFile(cssOutput);
+
+    gulp.task('wc:css', function () {
+        return gulp.src(cssConfig.input)
+            .pipe(sourcemaps.init({loadMaps: true}))
+            .pipe(sass().on('error', sass.logError))
+            .pipe(rename(cssOutput))
+            .pipe(sourcemaps.write('.'))
+            .pipe(gulp.dest(outputDir))
+            .pipe(cssmin())
+            .pipe(rename(cssOutputMin))
+            .pipe(sourcemaps.write('.'))
+            .pipe(gulp.dest(outputDir));
+    });
+
+    return 'wc:css';
+}
+
+function minFile(file) {
+    let parts = path.parse(file);
+    parts.name = parts.name + '.min';
+    delete parts.base;
+    return path.format(parts);
+}
 
