@@ -33,6 +33,7 @@ const rename = require('gulp-rename');
  * @typedef {{}} JsConfig
  * @property {string} input
  * @property {{loader: string, bundle: string, compatBundle: string, webpackConfig: {}, webpackContext: string}} [output]
+ * @property {string} [polyfillUrl] Overrides the default polyfill URL
  */
 
 /**
@@ -85,6 +86,8 @@ function initJs(gulp, jsConfig, componentName, outputDir) {
     let bundleOutputMin = minFile(bundleOutput);
     let compatOutputMin = minFile(compatOutput);
 
+    let polyfillUrl = jsConfig.polyfillUrl;
+
     let loaderOutput = jsOutput.loader || componentName + '.js';
 
     const webpack = require('webpack');
@@ -115,7 +118,7 @@ function initJs(gulp, jsConfig, componentName, outputDir) {
             .pipe(rename(compatOutput))
             .pipe(sourcemaps.write('.'))
             .pipe(loaderGenerator({
-                polyfills: 'https://cdn.byu.edu/web-component-polyfills/latest/polyfills.min.js',
+                polyfills: polyfillUrl,
                 bundle: bundleOutputMin,
                 compatBundle: compatOutputMin,
                 output: loaderOutput
