@@ -18,6 +18,7 @@
 const path = require('path');
 const sourcemaps = require('gulp-sourcemaps');
 const rename = require('gulp-rename');
+const iife = require('gulp-iife');
 
 /**
  * @typedef {{}} Options
@@ -112,8 +113,10 @@ function initJs(gulp, jsConfig, componentName, outputDir) {
                             browsers: ['last 2 versions', 'ie >= 11', '>5% in US']
                         }
                     }]
-                ],
-                plugins: ['iife-wrap']
+                ]
+            }))
+            .pipe(iife({
+                useStrict: true
             }))
             .pipe(rename(compatOutput))
             .pipe(sourcemaps.write('.'))
