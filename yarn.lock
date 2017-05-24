@@ -1227,9 +1227,9 @@ builtin-status-codes@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/builtin-status-codes/-/builtin-status-codes-3.0.0.tgz#85982878e21b98e1c66425e03d0174788f569ee8"
 
-byu-web-component-loader-generator@^0.1.2:
-  version "0.1.4"
-  resolved "https://registry.yarnpkg.com/byu-web-component-loader-generator/-/byu-web-component-loader-generator-0.1.4.tgz#ecdd21db8327e4dd038c30e86577d03fed99a131"
+byu-web-component-loader-generator@^0.1.8:
+  version "0.1.8"
+  resolved "https://registry.yarnpkg.com/byu-web-component-loader-generator/-/byu-web-component-loader-generator-0.1.8.tgz#b722751dab2ec828995876487bfc89a6fa7dc973"
   dependencies:
     ejs "^2.5.5"
     jsmin "^1.0.1"

@@ -11,7 +11,7 @@
     "babel-preset-env": "^1.1.11",
     "babili": "^0.0.11",
     "browser-sync": "^2.18.8",
-    "byu-web-component-loader-generator": "^0.1.2",
+    "byu-web-component-loader-generator": "^0.1.8",
     "css-loader": "^0.26.2",
     "ejs-compiled-loader": "^2.0.0",
     "file-loader": "^0.10.1",
