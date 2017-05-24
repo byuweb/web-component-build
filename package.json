@@ -1,6 +1,6 @@
 {
   "name": "byu-web-component-build",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Build toolchain for BYU Web Components",
   "main": "index.js",
   "repository": "git@github.com:byuweb/web-component-build.git",
