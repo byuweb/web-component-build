@@ -16,6 +16,22 @@
  */
 
 const path = require('path');
+const fs = require('fs-extra');
+const webpack = require('webpack');
+const GitRevisionPlugin = require('git-revision-webpack-plugin');
+
+const gitRevisions = new GitRevisionPlugin({lightweightTags: true});
+
+const packageJson = fs.readJsonSync(path.join(process.cwd(), 'package.json'));
+
+const version = {
+    git: gitRevisions.version(),
+    branch: gitRevisions.branch(),
+    version: packageJson.version,
+    name: packageJson.name
+};
+
+console.log(version);
 
 module.exports = function (input, output) {
     return {
@@ -44,7 +60,6 @@ module.exports = function (input, output) {
                                 interpolate: true,
                                 // minimize: true
                             },
-
                         },
                         {
                             loader: 'htmlmin-loader',
@@ -113,6 +128,12 @@ module.exports = function (input, output) {
             filename: output,
             path: path.resolve(__dirname, 'dist')
         },
-        devtool: 'source-map'
+        devtool: 'source-map',
+        plugins: [
+            new webpack.BannerPlugin({
+                raw: true,
+                banner: `console.log("🚀 Starting ${version.name} ${version.version} (git: ${version.git} ${version.branch}) 🚀");`
+            })
+        ]
     }
 };

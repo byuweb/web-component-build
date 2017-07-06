@@ -17,5 +17,5 @@
 "use strict";
 
 module.exports = {
-    gulp: require('./runner/gulp')
+    gulp: require('./runner/gulp'),
 };

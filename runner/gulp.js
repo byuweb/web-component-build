@@ -74,6 +74,10 @@ module.exports = function initGulp(gulp, opts) {
     gulp.task('wc:build', buildTasks);
 };
 
+module.exports.defaultWebpackConfig = function() {
+    return require('../default-webpack.config')
+};
+
 function initJs(gulp, jsConfig, componentName, outputDir) {
     const webpackStream = require('webpack-stream');
     const babel = require('gulp-babel');
@@ -102,8 +106,9 @@ function initJs(gulp, jsConfig, componentName, outputDir) {
             .pipe(sourcemaps.init({loadMaps: true}))
             .pipe(through.obj(function (file, enc, cb) {//do NOT change this to an arrow function!
                 //Don't pipe through any source map files as they'll be handled by gulp-sourcemaps
-                let isSourceMap = /\.map$/.test(file.path);
-                if (!isSourceMap) this.push(file);
+                if (file.extname === '.js') {
+                    this.push(file);
+                }
                 cb();
             }))
             .pipe(babel({
