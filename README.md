@@ -28,7 +28,7 @@ your project root.
 ### Example configuration file
 
 ```javascript
-export default {
+module.exports = {
     sourceDir: 'src/web-components',
     destDir: 'www/components'
 }
