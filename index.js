@@ -18,8 +18,6 @@
 'use strict'
 
 const appRootPath = require('app-root-path')
-console.log(__dirname)
-console.log(appRootPath)
 const path = require('path')
 const fs = require('fs-extra')
 const rollup = require('rollup')
