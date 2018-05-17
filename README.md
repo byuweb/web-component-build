@@ -4,11 +4,8 @@
 
 Build toolchain for BYU Web Components.
 
-This toolchain bundles together components into a single js file
-using webpack, transpiles to ES5, minfies, and generates a file that
-loads the appropriate bundle and polyfills.
-
-Currently, gulp is the only build tool supported.
+This tool will generate module bundles for a set of web component javascript files
+using rollup, resolving any imported modules.
 
 # Installation
 
@@ -17,44 +14,32 @@ npm install --save-dev byu-web-component-build
 ```
 
 # Usage
-
-## Gulp.js
-
-Once initialized, the build will add a `wc:build` task to gulp, which
-will invoke a series of smaller tasks to build the components.
-
-Example Gulpfile:
-
 ```
-const initWcBuild = require('byu-web-component-build').gulp;
+npx byu-web-component-build
+```
 
-initWcBuild(gulp, {
-    componentName: 'my-component-name',
-    js: {
-        input: './my-component/script.js'
-    },
-    css: {
-        input: './css/site.scss'
-    }
-});
+## Configuration
 
-gulp.task('build', ['wc:build']);
+By default, all .js files in the `components` directory will be bundled and
+output to the `dist` directory with `-bundle` added to the file name. These defaults
+can be changed by including a file named `byu-web-component-build.config.js` in
+your project root.
 
+### Example configuration file
+
+```javascript
+module.exports = {
+    sourceDir: 'src/web-components',
+    destDir: 'www/components'
+}
 ```
 
 # Options
 
 Name | required | default | description
 -----|----------|---------|------------
-componentName | Y | | The name of the component.
-outputDirectory | N | 'dist' | Directory in which to output files
-js | Y | | Javascript options
-js.input | Y | | Javascript input file
-js.output | N | |
-js.output.loader | N | `componentName + '.js'` | Loader file output
-js.output.bundle | N | `'components.js'` | Main bundle file
-js.output.compatBundle | N | `'components-compat.js'` | Backwards-compatibile (ES5) bundle file
-webpackConfig | N | Default Config | Overrides the webpack configuration
+sourceDir | N | 'components' | Directory with files to bundle
+destDir | N | 'dist' | Directory in which to output files
 
 [npm-url]: https://www.npmjs.com/package/byu-web-component-build
 [npm-image]: https://img.shields.io/npm/v/byu-web-component-build.svg
