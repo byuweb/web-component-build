@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  *  @license
- *    Copyright 2017 Brigham Young University
+ *    Copyright 2018 Brigham Young University
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -17,10 +17,11 @@
  */
 'use strict'
 
+const appRootPath = require('app-root-path')
+console.log(__dirname)
+console.log(appRootPath)
 const path = require('path')
 const fs = require('fs-extra')
-const config = {}
-/* require(path.resolve(projectRoot, 'web-component-build-config.js')) // TODO make config file in project root and it should be optional */
 const rollup = require('rollup')
 
 const resolve = require('rollup-plugin-node-resolve')
@@ -49,10 +50,10 @@ async function buildComponents ({sourceDir = 'components', destDir = 'dist'}) {
   console.log(`Building Components in ${sourceDir}...`)
 
   // get all .js files in sorceDir
-  const fileContents = await fs.readdir(path.resolve(process.cwd(), sourceDir))
+  const fileContents = await fs.readdir(path.resolve(appRootPath.toString(), sourceDir))
   const sourceFiles = fileContents
   .filter(f => path.extname(f) === '.js')
-  .map(f => path.resolve(process.cwd(), sourceDir, f))
+  .map(f => path.resolve(appRootPath.toString(), sourceDir, f))
   .filter(async f => {
     try {
       const stats = await fs.stat(f)
@@ -70,7 +71,7 @@ async function buildComponents ({sourceDir = 'components', destDir = 'dist'}) {
       console.log(`Building (${i+1} of ${sourceFiles.length}) ${f}...`)
       const fullInputOptions = Object.assign({}, {input: f}, inputOptions)
       const bundle = await rollup.rollup(fullInputOptions)
-      const destFilename = path.resolve(process.cwd(), destDir, name + '-bundle' + ext)
+      const destFilename = path.resolve(appRootPath.toString(), destDir, name + '-bundle' + ext)
       const fullOutputOptions = Object.assign({}, {file: destFilename}, outputOptions)
       return bundle.write(fullOutputOptions)
     } catch (err) {
@@ -87,6 +88,16 @@ async function buildComponents ({sourceDir = 'components', destDir = 'dist'}) {
   console.log('Build Finished!')
 
   // TODO make an optional es5 bundle as well
+}
+
+let config = {}
+try {
+  const configFromFile = require(path.resolve(appRootPath.toString(), 'byu-web-component-build.config.js'))
+  Object.assign(config, configFromFile)
+} catch (err) {
+  if (err.code !== 'MODULE_NOT_FOUND') {
+    throw err
+  }
 }
 
 buildComponents(config)
