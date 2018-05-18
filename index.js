@@ -24,6 +24,7 @@ const rollup = require('rollup')
 
 const resolve = require('rollup-plugin-node-resolve')
 const commonjs = require('rollup-plugin-commonjs')
+// TODO: Include license and minify plugins
 const inputOptions = {
   plugins: [
     resolve({}),
