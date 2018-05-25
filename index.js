@@ -94,6 +94,19 @@ const reportError = err => {
   console.error(err)
 }
 
+async function buildComponent (f, destDir) {
+  try {
+    const {name, ext} = path.parse(f)
+    const fullInputOptions = Object.assign({}, {input: f}, inputOptions)
+    const bundle = await rollup.rollup(fullInputOptions)
+    const destFilename = path.resolve(appRootPath.toString(), destDir, name + '-bundle' + ext)
+    const fullOutputOptions = Object.assign({}, {file: destFilename}, outputOptions)
+    return bundle.write(fullOutputOptions)
+  } catch (err) {
+    reportError(err)
+  }
+}
+
 async function buildComponents ({sourceDir = 'components', destDir = 'dist'}) {
   console.log(`Building Components in ${sourceDir}...`)
 
@@ -113,18 +126,9 @@ async function buildComponents ({sourceDir = 'components', destDir = 'dist'}) {
     })
 
   // call rollup on each of them
-  const rollupPromises = sourceFiles.map(async (f, i) => {
-    try {
-      const {name, ext} = path.parse(f)
-      console.log(`Building (${i + 1} of ${sourceFiles.length}) ${f}...`)
-      const fullInputOptions = Object.assign({}, {input: f}, inputOptions)
-      const bundle = await rollup.rollup(fullInputOptions)
-      const destFilename = path.resolve(appRootPath.toString(), destDir, name + '-bundle' + ext)
-      const fullOutputOptions = Object.assign({}, {file: destFilename}, outputOptions)
-      return bundle.write(fullOutputOptions)
-    } catch (err) {
-      reportError(err)
-    }
+  const rollupPromises = sourceFiles.map((f, i) => {
+    console.log(`Building (${i + 1} of ${sourceFiles.length}) ${f}...`)
+    return buildComponent(f, destDir)
   })
 
   try {
@@ -154,11 +158,18 @@ try {
 if (options.watch) {
   console.log('Watch!')
   var chokidar = require('chokidar')
-  const {sourceDir} = config
-  const rebuild = () => {
-    buildComponents(config)
-    .then(() => console.log('rebuilt'))
-    .catch(err => reportError(err))
+  const {sourceDir, destDir} = config
+  const rebuild = async (f) => {
+    console.log(`Watch: ${f} changed`)
+    if (!path.extname(f) === '.js') {
+      return
+    }
+    try {
+      await buildComponent(f, destDir)
+      console.log(`rebuilt ${f}`)
+    } catch(err) {
+      reportError(err)
+    }
   }
   chokidar.watch(sourceDir)
   .on('add', rebuild)
@@ -166,6 +177,6 @@ if (options.watch) {
   .on('unlink', rebuild)
 } else {
   buildComponents(config)
-    .then(() => console.log('done'))
-    .catch(err => reportError(err))
+  .then(() => console.log('done'))
+  .catch(err => reportError(err))
 }
