@@ -22,8 +22,57 @@ const path = require('path')
 const fs = require('fs-extra')
 const rollup = require('rollup')
 
+console.log('__dirname =', __dirname)
+console.log(`appRootPath=${appRootPath.toString()}`)
+
 const resolve = require('rollup-plugin-node-resolve')
 const commonjs = require('rollup-plugin-commonjs')
+
+const optionDefinitions = [
+  { name: 'config-file',
+    alias: 'c',
+    type: String,
+    typeLabel: '<file>',
+    description: 'Config file name',
+    defaultValue: path.resolve(appRootPath.toString(), 'byu-web-component-build.config.js')
+  },
+  {
+    name: 'watch',
+    alias: 'w',
+    type: Boolean,
+    description: 'Rebuild each time a source file is changed',
+    defaultValue: false
+  },
+  {
+    name: 'help',
+    alias: 'h',
+    type: Boolean,
+    description: 'Display this usage guide.'
+  }
+]
+
+const commandLineArgs = require('command-line-args')
+const options = commandLineArgs(optionDefinitions, {camelCase: true})
+
+if (options.help) {
+  const commandLineUsage = require('command-line-usage')
+  const usage = commandLineUsage([
+    {
+      header: 'BYU Web Component Build',
+      content: 'Bundles dependencies of an es6 module into a single file.'
+    },
+    {
+      header: 'Options',
+      optionList: optionDefinitions
+    },
+    {
+      content: 'Project home: {underline https://www.npmjs.com/package/@byuweb/byu-web-component-build}'
+    }
+  ])
+  console.log(usage)
+  process.exit(0)
+}
+
 // TODO: Include license and minify plugins
 const inputOptions = {
   plugins: [
@@ -51,23 +100,23 @@ async function buildComponents ({sourceDir = 'components', destDir = 'dist'}) {
   // get all .js files in sorceDir
   const fileContents = await fs.readdir(path.resolve(appRootPath.toString(), sourceDir))
   const sourceFiles = fileContents
-  .filter(f => path.extname(f) === '.js')
-  .map(f => path.resolve(appRootPath.toString(), sourceDir, f))
-  .filter(async f => {
-    try {
-      const stats = await fs.stat(f)
-      return stats.isFile()
-    } catch (err) {
-      reportError(err)
-      return false
-    }
-  })
+    .filter(f => path.extname(f) === '.js')
+    .map(f => path.resolve(appRootPath.toString(), sourceDir, f))
+    .filter(async f => {
+      try {
+        const stats = await fs.stat(f)
+        return stats.isFile()
+      } catch (err) {
+        reportError(err)
+        return false
+      }
+    })
 
   // call rollup on each of them
   const rollupPromises = sourceFiles.map(async (f, i) => {
     try {
       const {name, ext} = path.parse(f)
-      console.log(`Building (${i+1} of ${sourceFiles.length}) ${f}...`)
+      console.log(`Building (${i + 1} of ${sourceFiles.length}) ${f}...`)
       const fullInputOptions = Object.assign({}, {input: f}, inputOptions)
       const bundle = await rollup.rollup(fullInputOptions)
       const destFilename = path.resolve(appRootPath.toString(), destDir, name + '-bundle' + ext)
@@ -89,9 +138,12 @@ async function buildComponents ({sourceDir = 'components', destDir = 'dist'}) {
   // TODO make an optional es5 bundle as well
 }
 
-let config = {}
+let config = {
+  sourceDir: 'components',
+  destDir: 'dist'
+}
 try {
-  const configFromFile = require(path.resolve(appRootPath.toString(), 'byu-web-component-build.config.js'))
+  const configFromFile = require(options.configFile)
   Object.assign(config, configFromFile)
 } catch (err) {
   if (err.code !== 'MODULE_NOT_FOUND') {
@@ -99,6 +151,21 @@ try {
   }
 }
 
-buildComponents(config)
-.then(() => console.log('done'))
-.catch(err => reportError(err))
+if (options.watch) {
+  console.log('Watch!')
+  var chokidar = require('chokidar')
+  const {sourceDir} = config
+  const rebuild = () => {
+    buildComponents(config)
+    .then(() => console.log('rebuilt'))
+    .catch(err => reportError(err))
+  }
+  chokidar.watch(sourceDir)
+  .on('add', rebuild)
+  .on('change', rebuild)
+  .on('unlink', rebuild)
+} else {
+  buildComponents(config)
+    .then(() => console.log('done'))
+    .catch(err => reportError(err))
+}

@@ -18,6 +18,13 @@ npm install --save-dev byu-web-component-build
 npx byu-web-component-build
 ```
 
+# Command-line Arguments
+
+Argument | Short Option | Long Option | Description
+-|-|-|-
+Config File Location | -c *path to config file* | --config-file *path to config file* | The path to the config file. Defaults to `project root directory/byu-web-component-build.config.js`
+Watch | -w | --watch | Set this flag to watch for changes to the source files. Defaults to false.
+
 ## Configuration
 
 By default, all .js files in the `components` directory will be bundled and
@@ -34,7 +41,7 @@ module.exports = {
 }
 ```
 
-# Options
+# Configuration File Options
 
 Name | required | default | description
 -----|----------|---------|------------
