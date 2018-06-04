@@ -147,10 +147,10 @@ async function buildComponents ({sourceDir = 'components', destDir = 'dist'}) {
   })
 
   try {
-    await rollupPromises
-    await minifiedPromises
-
-    console.log('Build Finished!')
+    return Promise.all(rollupPromises.concat(minifiedPromises))
+    .then(() => {
+      console.log('Build Finished!')
+    })
   } catch (err) {
     reportError(err)
     process.exit(1)
