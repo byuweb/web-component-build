@@ -27,6 +27,7 @@ console.log(`appRootPath=${appRootPath.toString()}`)
 
 const resolve = require('rollup-plugin-node-resolve')
 const commonjs = require('rollup-plugin-commonjs')
+const minify = require('rollup-plugin-babel-minify')
 
 const optionDefinitions = [
   { name: 'config-file',
@@ -77,13 +78,23 @@ if (options.help) {
 const inputOptions = {
   plugins: [
     resolve({}),
+    // non-CommonJS modules will be ignored, but you can also
+    // specifically include/exclude files
     commonjs({
-      // non-CommonJS modules will be ignored, but you can also
-      // specifically include/exclude files
       include: 'node_modules/**' // Default: undefined
     })
   ]
-
+}
+const minifyInputOptions = {
+  plugins: [
+    resolve({}),
+    // non-CommonJS modules will be ignored, but you can also
+    // specifically include/exclude files
+    commonjs({
+      include: 'node_modules/**' // Default: undefined
+    }),
+    minify({})
+  ]
 }
 const outputOptions = {
   format: 'es'
@@ -94,12 +105,12 @@ const reportError = err => {
   console.error(err)
 }
 
-async function buildComponent (f, destDir) {
+async function buildComponent (f, filenameAppend, destDir, inputOptions) {
   try {
     const {name, ext} = path.parse(f)
     const fullInputOptions = Object.assign({}, {input: f}, inputOptions)
     const bundle = await rollup.rollup(fullInputOptions)
-    const destFilename = path.resolve(appRootPath.toString(), destDir, name + '-bundle' + ext)
+    const destFilename = path.resolve(appRootPath.toString(), destDir, name + filenameAppend + ext)
     const fullOutputOptions = Object.assign({}, {file: destFilename}, outputOptions)
     return bundle.write(fullOutputOptions)
   } catch (err) {
@@ -128,16 +139,22 @@ async function buildComponents ({sourceDir = 'components', destDir = 'dist'}) {
   // call rollup on each of them
   const rollupPromises = sourceFiles.map((f, i) => {
     console.log(`Building (${i + 1} of ${sourceFiles.length}) ${f}...`)
-    return buildComponent(f, destDir)
+    return buildComponent(f, '-bundle', destDir, inputOptions)
+  })
+  const minifiedPromises = sourceFiles.map((f, i) => {
+    console.log(`Minifying (${i + 1} of ${sourceFiles.length}) ${f}...`)
+    return buildComponent(f, '-bundle.min', destDir, minifyInputOptions)
   })
 
   try {
     await rollupPromises
+    await minifiedPromises
+
+    console.log('Build Finished!')
   } catch (err) {
     reportError(err)
+    process.exit(1)
   }
-
-  console.log('Build Finished!')
 
   // TODO make an optional es5 bundle as well
 }
