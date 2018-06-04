@@ -182,7 +182,8 @@ if (options.watch) {
       return
     }
     try {
-      await buildComponent(f, destDir)
+      await buildComponent(f, '-bundle', destDir, inputOptions)
+      await buildComponent(f, '-bundle.min', destDir, minifyInputOptions)
       console.log(`rebuilt ${f}`)
     } catch(err) {
       reportError(err)
