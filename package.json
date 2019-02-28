@@ -1,6 +1,6 @@
 {
   "name": "@byuweb/byu-web-component-build",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Build toolchain for BYU Web Components",
   "main": "index.js",
   "bin": {
