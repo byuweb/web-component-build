@@ -21,6 +21,7 @@ const appRootPath = require('app-root-path')
 const path = require('path')
 const fs = require('fs-extra')
 const rollup = require('rollup')
+const wcLoaderGenerator = require('byu-web-component-loader-generator')
 
 console.log('__dirname =', __dirname)
 console.log(`appRootPath=${appRootPath.toString()}`)
@@ -53,7 +54,7 @@ const optionDefinitions = [
 ]
 
 const commandLineArgs = require('command-line-args')
-const options = commandLineArgs(optionDefinitions, {camelCase: true})
+const options = commandLineArgs(optionDefinitions, { camelCase: true })
 
 if (options.help) {
   const commandLineUsage = require('command-line-usage')
@@ -105,20 +106,28 @@ const reportError = err => {
   console.error(err)
 }
 
-async function buildComponent (f, filenameAppend, destDir, inputOptions) {
+async function buildComponent (f, filenameAppend, destDir, inputOptions, componentLocation) {
   try {
-    const {name, ext} = path.parse(f)
-    const fullInputOptions = Object.assign({}, {input: f}, inputOptions)
+    const { name, ext } = path.parse(f)
+    const fullInputOptions = Object.assign({}, { input: f }, inputOptions)
     const bundle = await rollup.rollup(fullInputOptions)
     const destFilename = path.resolve(appRootPath.toString(), destDir, name + filenameAppend + ext)
-    const fullOutputOptions = Object.assign({}, {file: destFilename}, outputOptions)
-    return bundle.write(fullOutputOptions)
+    const fullOutputOptions = Object.assign({}, { file: destFilename }, outputOptions)
+    await bundle.write(fullOutputOptions)
+    const withPolyfills = wcLoaderGenerator({
+      polyfills: 'https://cdn.byu.edu/web-component-polyfills/latest/polyfills.min.js',
+      bundle: componentLocation + '/' + name + filenameAppend + ext
+    })
+    if (componentLocation) {
+      const polyFilename = path.resolve(appRootPath.toString(), destDir, name + '-polyfilled' + ext)
+      await fs.outputFile(polyFilename, withPolyfills)
+    }
   } catch (err) {
     reportError(err)
   }
 }
 
-async function buildComponents ({sourceDir = 'components', destDir = 'dist'}) {
+async function buildComponents ({ sourceDir = 'components', destDir = 'dist', componentLocation }) {
   console.log(`Building Components in ${sourceDir}...`)
 
   // get all .js files in sorceDir
@@ -139,18 +148,18 @@ async function buildComponents ({sourceDir = 'components', destDir = 'dist'}) {
   // call rollup on each of them
   const rollupPromises = sourceFiles.map((f, i) => {
     console.log(`Building (${i + 1} of ${sourceFiles.length}) ${f}...`)
-    return buildComponent(f, '-bundle', destDir, inputOptions)
+    return buildComponent(f, '-bundle', destDir, inputOptions, componentLocation)
   })
   const minifiedPromises = sourceFiles.map((f, i) => {
     console.log(`Minifying (${i + 1} of ${sourceFiles.length}) ${f}...`)
-    return buildComponent(f, '-bundle.min', destDir, minifyInputOptions)
+    return buildComponent(f, '-bundle.min', destDir, minifyInputOptions, componentLocation)
   })
 
   try {
     return Promise.all(rollupPromises.concat(minifiedPromises))
-    .then(() => {
-      console.log('Build Finished!')
-    })
+      .then(() => {
+        console.log('Build Finished!')
+      })
   } catch (err) {
     reportError(err)
     process.exit(1)
@@ -175,26 +184,26 @@ try {
 if (options.watch) {
   console.log('Watch!')
   var chokidar = require('chokidar')
-  const {sourceDir, destDir} = config
+  const { sourceDir, destDir, componentLocation } = config
   const rebuild = async (f) => {
     console.log(`Watch: ${f} changed`)
     if (!path.extname(f) === '.js') {
       return
     }
     try {
-      await buildComponent(f, '-bundle', destDir, inputOptions)
-      await buildComponent(f, '-bundle.min', destDir, minifyInputOptions)
+      await buildComponent(f, '-bundle', destDir, inputOptions, componentLocation)
+      await buildComponent(f, '-bundle.min', destDir, minifyInputOptions, componentLocation)
       console.log(`rebuilt ${f}`)
-    } catch(err) {
+    } catch (err) {
       reportError(err)
     }
   }
   chokidar.watch(sourceDir)
-  .on('add', rebuild)
-  .on('change', rebuild)
-  .on('unlink', rebuild)
+    .on('add', rebuild)
+    .on('change', rebuild)
+    .on('unlink', rebuild)
 } else {
   buildComponents(config)
-  .then(() => console.log('done'))
-  .catch(err => reportError(err))
+    .then(() => console.log('done'))
+    .catch(err => reportError(err))
 }

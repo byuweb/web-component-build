@@ -32,12 +32,16 @@ output to the `dist` directory with `-bundle` added to the file name. These defa
 can be changed by including a file named `byu-web-component-build.config.js` in
 your project root.
 
+If you provide a componentLocation in the config file, another script will be generated
+which will load the web component polyfills before loading your components.
+
 ### Example configuration file
 
 ```javascript
 module.exports = {
     sourceDir: 'src/web-components',
-    destDir: 'www/components'
+    destDir: 'www/components',
+    componentLocation: 'https://cdn.example.com/components/latest'
 }
 ```
 

@@ -35,3 +35,9 @@ jspm_packages
 
 # Optional REPL history
 .node_repl_history
+
+# editor files
+*.swp
+
+# generated test files
+test/bundled/test-bundle.js test/bundled/test-bundle.min.js
