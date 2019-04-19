@@ -114,13 +114,26 @@ async function buildComponent (f, filenameAppend, destDir, inputOptions, compone
     const destFilename = path.resolve(appRootPath.toString(), destDir, name + filenameAppend + ext)
     const fullOutputOptions = Object.assign({}, { file: destFilename }, outputOptions)
     await bundle.write(fullOutputOptions)
-    const withPolyfills = wcLoaderGenerator({
+  } catch (err) {
+    reportError(err)
+  }
+}
+
+async function buildNomoduleComponent (f, filenameAppend, destDir, inputOptions, componentLocation) {
+  try {
+    const { name, ext } = path.parse(f)
+    const fullInputOptions = Object.assign({}, { input: f }, inputOptions)
+    const bundle = await rollup.rollup(fullInputOptions)
+    const destFilename = path.resolve(appRootPath.toString(), destDir, name + filenameAppend + ext)
+    const fullOutputOptions = Object.assign({}, { file: destFilename }, { format: 'iife' })
+    await bundle.write(fullOutputOptions)
+    const polyfillLoader = wcLoaderGenerator({
       polyfills: 'https://cdn.byu.edu/web-component-polyfills/latest/polyfills.min.js',
       bundle: componentLocation + '/' + name + filenameAppend + ext
     })
     if (componentLocation) {
-      const polyFilename = path.resolve(appRootPath.toString(), destDir, name + '-polyfilled' + ext)
-      await fs.outputFile(polyFilename, withPolyfills)
+      const polyFilename = path.resolve(appRootPath.toString(), destDir, name + filenameAppend + '-polyfilled' + ext)
+      await fs.outputFile(polyFilename, polyfillLoader)
     }
   } catch (err) {
     reportError(err)
@@ -154,9 +167,13 @@ async function buildComponents ({ sourceDir = 'components', destDir = 'dist', co
     console.log(`Minifying (${i + 1} of ${sourceFiles.length}) ${f}...`)
     return buildComponent(f, '-bundle.min', destDir, minifyInputOptions, componentLocation)
   })
+  const nomodulePromises = sourceFiles.map((f, i) => {
+    console.log(`Building Polyfilled (${i + 1} of ${sourceFiles.length}) ${f}...`)
+    return buildNomoduleComponent(f, '-nomodule.min', destDir, minifyInputOptions, componentLocation)
+  })
 
   try {
-    return Promise.all(rollupPromises.concat(minifiedPromises))
+    return Promise.all(rollupPromises.concat(minifiedPromises).concat(nomodulePromises))
       .then(() => {
         console.log('Build Finished!')
       })
@@ -193,6 +210,7 @@ if (options.watch) {
     try {
       await buildComponent(f, '-bundle', destDir, inputOptions, componentLocation)
       await buildComponent(f, '-bundle.min', destDir, minifyInputOptions, componentLocation)
+      await buildNomoduleComponent(f, '-nomodule.min', destDir, minifyInputOptions, componentLocation)
       console.log(`rebuilt ${f}`)
     } catch (err) {
       reportError(err)

@@ -41,3 +41,4 @@ jspm_packages
 
 # generated test files
 test/bundled/test-bundle.js test/bundled/test-bundle.min.js
+test/bundled
