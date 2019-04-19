@@ -125,7 +125,7 @@ async function buildNomoduleComponent (f, filenameAppend, destDir, inputOptions,
     const fullInputOptions = Object.assign({}, { input: f }, inputOptions)
     const bundle = await rollup.rollup(fullInputOptions)
     const destFilename = path.resolve(appRootPath.toString(), destDir, name + filenameAppend + ext)
-    const fullOutputOptions = Object.assign({}, { file: destFilename }, { format: 'iife' })
+    const fullOutputOptions = Object.assign({}, { file: destFilename, name }, { format: 'iife' })
     await bundle.write(fullOutputOptions)
     const polyfillLoader = wcLoaderGenerator({
       polyfills: 'https://cdn.byu.edu/web-component-polyfills/latest/polyfills.min.js',
