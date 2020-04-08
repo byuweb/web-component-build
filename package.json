@@ -12,6 +12,8 @@
   "dependencies": {
     "@babel/core": "^7.9.0",
     "@babel/preset-env": "^7.9.5",
+    "@rollup/plugin-commonjs": "^11.0.2",
+    "@rollup/plugin-node-resolve": "^7.1.1",
     "app-root-path": "^3.0.0",
     "byu-web-component-loader-generator": "^0.1.8",
     "chokidar": "^3.3.1",
@@ -19,8 +21,6 @@
     "command-line-usage": "^6.1.0",
     "fs-extra": "^9.0.0",
     "rollup": "^2.3.4",
-    "rollup-plugin-babel-minify": "^10.0.0",
-    "rollup-plugin-commonjs": "^10.1.0",
-    "rollup-plugin-node-resolve": "^5.2.0"
+    "rollup-plugin-terser": "^5.3.0"
   }
 }

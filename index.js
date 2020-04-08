@@ -26,12 +26,13 @@ const wcLoaderGenerator = require('byu-web-component-loader-generator')
 console.log('__dirname =', __dirname)
 console.log(`appRootPath=${appRootPath.toString()}`)
 
-const resolve = require('rollup-plugin-node-resolve')
-const commonjs = require('rollup-plugin-commonjs')
-const minify = require('rollup-plugin-babel-minify')
+const resolve = require('@rollup/plugin-node-resolve')
+const commonjs = require('@rollup/plugin-commonjs')
+const terser = require('rollup-plugin-terser').terser
 
 const optionDefinitions = [
-  { name: 'config-file',
+  {
+    name: 'config-file',
     alias: 'c',
     type: String,
     typeLabel: '<file>',
@@ -78,7 +79,7 @@ if (options.help) {
 // TODO: Include license and minify plugins
 const inputOptions = {
   plugins: [
-    resolve({}),
+    resolve(),
     // non-CommonJS modules will be ignored, but you can also
     // specifically include/exclude files
     commonjs({
@@ -94,7 +95,7 @@ const minifyInputOptions = {
     commonjs({
       include: 'node_modules/**' // Default: undefined
     }),
-    minify({})
+    terser()
   ]
 }
 const outputOptions = {
@@ -186,7 +187,7 @@ async function buildComponents ({ sourceDir = 'components', destDir = 'dist', co
   // TODO make an optional es5 bundle as well
 }
 
-let config = {
+const config = {
   sourceDir: 'components',
   destDir: 'dist'
 }
