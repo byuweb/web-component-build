@@ -10,17 +10,17 @@
   "author": "BYU Web Community",
   "license": "Apache-2.0",
   "dependencies": {
-    "@babel/core": "^7.3.4",
-    "@babel/preset-env": "^7.3.4",
-    "app-root-path": "^2.0.1",
+    "@babel/core": "^7.9.0",
+    "@babel/preset-env": "^7.9.5",
+    "app-root-path": "^3.0.0",
     "byu-web-component-loader-generator": "^0.1.8",
-    "chokidar": "^2.1.2",
+    "chokidar": "^3.3.1",
     "command-line-args": "^5.0.2",
-    "command-line-usage": "^5.0.5",
-    "fs-extra": "^7.0.1",
-    "rollup": "^0.65.2",
-    "rollup-plugin-babel-minify": "^6.2.0",
-    "rollup-plugin-commonjs": "^9.2.1",
-    "rollup-plugin-node-resolve": "^3.3.0"
+    "command-line-usage": "^6.1.0",
+    "fs-extra": "^9.0.0",
+    "rollup": "^2.3.4",
+    "rollup-plugin-babel-minify": "^10.0.0",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-node-resolve": "^5.2.0"
   }
 }
